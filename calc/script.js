@@ -100,7 +100,6 @@ document.addEventListener("DOMContentLoaded", () => {
 		const state = formData.get("state");
 		const city = formData.get("city");
 		const roof = formData.get("roof");
-		const roofArea = formData.get("roofArea");
 		const openSpace = formData.get("openSpace");
 		const dwellers = formData.get("dwellers");
 		const budget = formData.get("budget");
@@ -111,7 +110,6 @@ document.addEventListener("DOMContentLoaded", () => {
         <strong>State:</strong> ${state} <br>
         <strong>City:</strong> ${city} <br>
         <strong>Roof:</strong> ${roof} <br>
-        <strong>Roof Area:</strong> ${roofArea} m² <br>
         <strong>Open Space:</strong> ${openSpace} m² <br>
         <strong>Dwellers:</strong> ${dwellers} <br>
         <strong>Budget:</strong> ${budget ? "₹" + budget : "N/A"}
