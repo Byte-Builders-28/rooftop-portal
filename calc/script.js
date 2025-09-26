@@ -55,7 +55,7 @@ document.addEventListener("DOMContentLoaded", () => {
 			}
 			console.log(`Fetching cities for ${state}...`);
 			const controller = new AbortController();
-			const timeout = setTimeout(() => controller.abort(), 30000); // 10 sec timeout
+			const timeout = setTimeout(() => controller.abort(), 30000);
 			const res = await fetch(
 				"https://countriesnow.space/api/v0.1/countries/state/cities",
 				{
@@ -97,22 +97,35 @@ document.addEventListener("DOMContentLoaded", () => {
 	form.addEventListener("submit", function (e) {
 		e.preventDefault();
 		const formData = new FormData(this);
-		const state = formData.get("state");
-		const city = formData.get("city");
-		const roof = formData.get("roof");
-		const openSpace = formData.get("openSpace");
-		const dwellers = formData.get("dwellers");
-		const budget = formData.get("budget");
 
+		const openSpaceM2 = parseFloat(formData.get("openSpace")) || 0;
+		const openSpaceSqFt = +(openSpaceM2 * 10.7639).toFixed(2); // convert to sq ft
+
+		const payload = {
+			state: formData.get("state") || "",
+			city: formData.get("city") || "",
+			roof: formData.get("roof") || "",
+			area: openSpaceSqFt,
+			population: parseInt(formData.get("dwellers")) || 0,
+			budget: formData.get("budget")
+				? parseFloat(formData.get("budget"))
+				: null,
+		};
+
+		console.log("Form Payload:", payload);
+
+		// Optional: still show result in UI
 		document.getElementById("result").innerHTML = `
       <div class="alert alert-success">
         Submitted! <br>
-        <strong>State:</strong> ${state} <br>
-        <strong>City:</strong> ${city} <br>
-        <strong>Roof:</strong> ${roof} <br>
-        <strong>Open Space:</strong> ${openSpace} m² <br>
-        <strong>Dwellers:</strong> ${dwellers} <br>
-        <strong>Budget:</strong> ${budget ? "₹" + budget : "N/A"}
+        <strong>State:</strong> ${payload.state} <br>
+        <strong>City:</strong> ${payload.city} <br>
+        <strong>Roof:</strong> ${payload.roof} <br>
+        <strong>Open Space:</strong> ${payload.area} m² <br>
+        <strong>Dwellers:</strong> ${payload.population} <br>
+        <strong>Budget:</strong> ${
+					payload.budget !== null ? "₹" + payload.budget : "N/A"
+				}
       </div>
     `;
 	});
