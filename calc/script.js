@@ -94,7 +94,7 @@ document.addEventListener("DOMContentLoaded", () => {
 	});
 
 	const form = document.getElementById("feasibilityForm");
-	form.addEventListener("submit", function (e) {
+	form.addEventListener("submit", async function (e) {
 		e.preventDefault();
 		const formData = new FormData(this);
 
@@ -114,19 +114,26 @@ document.addEventListener("DOMContentLoaded", () => {
 
 		console.log("Form Payload:", payload);
 
-		// Optional: still show result in UI
-		document.getElementById("result").innerHTML = `
-      <div class="alert alert-success">
-        Submitted! <br>
-        <strong>State:</strong> ${payload.state} <br>
-        <strong>City:</strong> ${payload.city} <br>
-        <strong>Roof:</strong> ${payload.roof} <br>
-        <strong>Open Space:</strong> ${payload.area} m² <br>
-        <strong>Dwellers:</strong> ${payload.population} <br>
-        <strong>Budget:</strong> ${
-					payload.budget !== null ? "₹" + payload.budget : "N/A"
+		try {
+			const response = await fetch(
+				"https://your-fastapi-server.com/api/get_res",
+				{
+					method: "POST",
+					headers: { "Content-Type": "application/json" },
+					body: JSON.stringify(payload),
 				}
-      </div>
-    `;
+			);
+
+			if (!response.ok) throw new Error("Network response was not ok");
+
+			const result = await response.json();
+			localStorage.setItem("rainwaterResult", JSON.stringify(result));
+			window.location.href = "result.html";
+		} catch (err) {
+			console.error("Failed to fetch recommendation:", err);
+			alert("Error fetching recommendation. Check console.");
+		}
+
+		window.location.href = "../output";
 	});
 });
