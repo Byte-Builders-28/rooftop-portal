@@ -113,16 +113,13 @@ document.addEventListener("DOMContentLoaded", () => {
 		};
 
 		console.log("Form Payload:", payload);
-
+		spinner.style.display = "flex";
 		try {
-			const response = await fetch(
-				"https://your-fastapi-server.com/api/get_res",
-				{
-					method: "POST",
-					headers: { "Content-Type": "application/json" },
-					body: JSON.stringify(payload),
-				}
-			);
+			const response = await fetch("http://localhost:8000/api/get_res", {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify(payload),
+			});
 
 			if (!response.ok) throw new Error("Network response was not ok");
 
@@ -133,7 +130,7 @@ document.addEventListener("DOMContentLoaded", () => {
 			console.error("Failed to fetch recommendation:", err);
 			alert("Error fetching recommendation. Check console.");
 		}
-
+		spinner.style.display = "none";
 		window.location.href = "../output";
 	});
 });
