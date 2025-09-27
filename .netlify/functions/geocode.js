@@ -1,15 +1,11 @@
-import fetch from "node-fetch";
-
 export async function handler(event) {
 	const { lat, lng, city, state } = event.queryStringParameters || {};
-	const apiKey = process.env.OPENCAGE_KEY; // your Netlify env variable
+	const apiKey = process.env.OPENCAGE_KEY;
 
 	let url;
 	if (lat && lng) {
-		// reverse geocode
 		url = `https://api.opencagedata.com/geocode/v1/json?q=${lat}+${lng}&key=${apiKey}&no_annotations=1&language=en`;
 	} else if (city) {
-		// forward geocode
 		url = `https://api.opencagedata.com/geocode/v1/json?q=${encodeURIComponent(
 			city + (state ? ", " + state : "")
 		)}&key=${apiKey}&no_annotations=1&language=en`;
