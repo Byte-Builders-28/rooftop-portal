@@ -49,14 +49,24 @@ function setStatus(text) {
 
 // --- Reverse geocode using Nominatim ---
 async function reverseGeocode(lat, lng) {
+	const apiKey = process.env.OPENCAGE_KEY; // <-- replace with your real key
+	const url = `https://api.opencagedata.com/geocode/v1/json?q=${lat}+${lng}&key=${apiKey}&no_annotations=1&language=en`;
+
 	try {
-		const res = await fetch(
-			`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=10&addressdetails=1`
-		);
+		const res = await fetch(url);
+		if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
 		const data = await res.json();
-		const state = data.address.state || "";
+		console.log(data);
+
+		// OpenCage returns an array of results; take the first one
+		const components = data.results[0]?.components || {};
+		const state = components.state || "";
 		const city =
-			data.address.city || data.address.town || data.address.village || "";
+			components.city ||
+			components.town ||
+			components.village ||
+			components.county ||
+			"";
 		return { state, city };
 	} catch (err) {
 		console.error("Reverse geocode failed:", err);
@@ -92,9 +102,19 @@ async function locateUser(animate = true, autofill = true) {
 				const loc = await reverseGeocode(lat, lng);
 				if (loc.state) stateSelect.value = loc.state;
 				stateSelect.dispatchEvent(new Event("change"));
-				setTimeout(() => {
-					if (loc.city) citySelect.value = loc.city;
-				}, 500);
+				if (loc.city) {
+					const startTime = Date.now();
+					const interval = setInterval(() => {
+						if (citySelect.options.length > 0) {
+							citySelect.value = loc.city;
+							clearInterval(interval); // stop polling
+						} else if (Date.now() - startTime > 5000) {
+							// 5 seconds max
+							clearInterval(interval);
+							console.warn("City options never loaded.");
+						}
+					}, 100); // check every 100ms
+				}
 			}
 		},
 		(err) => setStatus("Could not get location: " + (err.message || err.code)),
@@ -183,3 +203,29 @@ useMapBtn.addEventListener("click", () => {
 
 // --- Recenter user ---
 locateBtn.addEventListener("click", () => locateUser(true, true));
+
+// --- Zoom to city when selection changes ---
+citySelect.addEventListener("change", async () => {
+	const city = citySelect.value;
+	const state = stateSelect.value;
+	if (!city) return;
+
+	const apiKey = process.env.OPENCAGE_KEY; // your OpenCage key
+	const url = `https://api.opencagedata.com/geocode/v1/json?q=${encodeURIComponent(
+		city + (state ? ", " + state : "")
+	)}&key=${apiKey}&no_annotations=1&language=en`;
+
+	try {
+		const res = await fetch(url);
+		if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+		const data = await res.json();
+		const location = data.results[0]?.geometry;
+		if (location) {
+			map.setView([location.lat, location.lng], 14, { animate: true });
+		} else {
+			console.warn("Could not find coordinates for city:", city);
+		}
+	} catch (err) {
+		console.error("Failed to geocode city:", err);
+	}
+});
