@@ -49,16 +49,11 @@ function setStatus(text) {
 
 // --- Reverse geocode using Nominatim ---
 async function reverseGeocode(lat, lng) {
-	const apiKey = process.env.OPENCAGE_KEY; // <-- replace with your real key
-	const url = `https://api.opencagedata.com/geocode/v1/json?q=${lat}+${lng}&key=${apiKey}&no_annotations=1&language=en`;
-
 	try {
-		const res = await fetch(url);
-		if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+		const res = await fetch(
+			`/.netlify/functions/geocode?lat=${lat}&lng=${lng}`
+		);
 		const data = await res.json();
-		console.log(data);
-
-		// OpenCage returns an array of results; take the first one
 		const components = data.results[0]?.components || {};
 		const state = components.state || "";
 		const city =
@@ -210,20 +205,14 @@ citySelect.addEventListener("change", async () => {
 	const state = stateSelect.value;
 	if (!city) return;
 
-	const apiKey = process.env.OPENCAGE_KEY; // your OpenCage key
-	const url = `https://api.opencagedata.com/geocode/v1/json?q=${encodeURIComponent(
-		city + (state ? ", " + state : "")
-	)}&key=${apiKey}&no_annotations=1&language=en`;
-
 	try {
-		const res = await fetch(url);
-		if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+		const res = await fetch(
+			`/.netlify/functions/geocode?city=${city}&state=${state}`
+		);
 		const data = await res.json();
 		const location = data.results[0]?.geometry;
 		if (location) {
 			map.setView([location.lat, location.lng], 14, { animate: true });
-		} else {
-			console.warn("Could not find coordinates for city:", city);
 		}
 	} catch (err) {
 		console.error("Failed to geocode city:", err);
