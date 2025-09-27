@@ -36,6 +36,10 @@ const useMapBtn = document.getElementById("useMapBtn");
 const stateSelect = document.getElementById("state");
 const citySelect = document.getElementById("city");
 
+// backend link
+
+const base_url = "http://localhost:8000";
+
 // Polygon state
 let points = [];
 let markers = [];
@@ -50,19 +54,12 @@ function setStatus(text) {
 // --- Reverse geocode using Nominatim ---
 async function reverseGeocode(lat, lng) {
 	try {
-		const res = await fetch(
-			`/.netlify/functions/geocode?lat=${lat}&lng=${lng}`
-		);
+		const res = await fetch(`${base_url}/api/geocode?lat=${lat}&lng=${lng}`);
 		const data = await res.json();
-		const components = data.results[0]?.components || {};
-		const state = components.state || "";
-		const city =
-			components.city ||
-			components.town ||
-			components.village ||
-			components.county ||
-			"";
-		return { state, city };
+		return {
+			state: data.state || "",
+			city: data.city || "",
+		};
 	} catch (err) {
 		console.error("Reverse geocode failed:", err);
 		return { state: "", city: "" };
@@ -205,14 +202,17 @@ citySelect.addEventListener("change", async () => {
 	const state = stateSelect.value;
 	if (!city) return;
 
+	const address = state ? `${city}, ${state}` : city;
+
 	try {
 		const res = await fetch(
-			`/.netlify/functions/geocode?city=${city}&state=${state}`
+			`${base_url}/api/geocode?address=${encodeURIComponent(address)}`
 		);
 		const data = await res.json();
-		const location = data.results[0]?.geometry;
-		if (location) {
-			map.setView([location.lat, location.lng], 14, { animate: true });
+		if (data.latitude && data.longitude) {
+			map.setView([data.latitude, data.longitude], 14, { animate: true });
+		} else {
+			console.warn("No coordinates returned for", address);
 		}
 	} catch (err) {
 		console.error("Failed to geocode city:", err);
