@@ -38,7 +38,7 @@ const citySelect = document.getElementById("city");
 
 // backend link
 
-const base_url = "http://localhost:8000";
+const base_url = "https://aquabytes.onrender.com";
 
 // Polygon state
 let points = [];

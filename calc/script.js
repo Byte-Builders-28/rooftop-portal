@@ -115,11 +115,14 @@ document.addEventListener("DOMContentLoaded", () => {
 		console.log("Form Payload:", payload);
 		spinner.style.display = "flex";
 		try {
-			const response = await fetch("http://localhost:8000/api/get_res", {
-				method: "POST",
-				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify(payload),
-			});
+			const response = await fetch(
+				"https://aquabytes.onrender.com/api/get_res",
+				{
+					method: "POST",
+					headers: { "Content-Type": "application/json" },
+					body: JSON.stringify(payload),
+				}
+			);
 
 			if (!response.ok) throw new Error("Network response was not ok");
 
