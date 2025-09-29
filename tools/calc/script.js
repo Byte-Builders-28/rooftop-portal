@@ -133,7 +133,7 @@ document.addEventListener("DOMContentLoaded", () => {
 			console.error("Failed to fetch recommendation:", err);
 			alert("Error fetching recommendation. Check console.");
 		}
-		window.location.href = "../output";
+		window.location.href = "./output";
 		spinner.style.display = "none";
 	});
 });
