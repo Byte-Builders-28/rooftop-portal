@@ -165,8 +165,10 @@ async function handleSubmit(e) {
 	e.preventDefault();
 	const state = stateSelect.value;
 	const city = citySelect.value;
-	const tank_cap = Number($("tank_cap").value) || 0;
-	const current_level = Number($("current_level").value) || 0;
+	// const tank_cap = Number($("tank_cap").value) || 0;
+	const tank_cap = 3000;
+	const current_level = 100;
+	// const current_level = Number($("current_level").value) || 0;
 	const population = Number($("population").value) || 0;
 	const avg_need = 135;
 
