@@ -11,7 +11,8 @@ function formatNumber(n) {
 }
 
 function refreshLocalCalc() {
-	const current = Number($("current_level").value) || 0;
+	// const current = Number($("current_level").value) || 0;
+	const current = 100;
 	const population = Number($("population").value) || 0;
 	const avg_need = 135;
 	const dailyUse = population * avg_need;
