@@ -4,6 +4,10 @@ const spinner = $("spinnerOverlay");
 const stateSelect = $("state");
 const citySelect = $("city");
 
+// NEW: Live Sensor selects
+const stateLiveSelect = $("state_live");
+const cityLiveSelect = $("city_live");
+
 function formatNumber(n) {
 	return n == null || isNaN(n)
 		? "-"
@@ -86,11 +90,16 @@ function populateStates() {
 		"Jammu and Kashmir",
 		"Ladakh",
 	];
-	states.forEach((s) => {
-		const opt = document.createElement("option");
-		opt.value = s;
-		opt.textContent = s;
-		stateSelect.appendChild(opt);
+
+	// Fill both Predict tab and Live tab
+	const allStateDropdowns = [stateSelect, stateLiveSelect];
+	allStateDropdowns.forEach((sel) => {
+		states.forEach((s) => {
+			const opt = document.createElement("option");
+			opt.value = s;
+			opt.textContent = s;
+			sel.appendChild(opt);
+		});
 	});
 }
 
@@ -106,6 +115,7 @@ async function fetchCities(state) {
 		console.log(`Fetching cities for ${state}...`);
 		const controller = new AbortController();
 		const timeout = setTimeout(() => controller.abort(), 30000);
+
 		const res = await fetch(
 			"https://countriesnow.space/api/v0.1/countries/state/cities",
 			{
@@ -115,9 +125,11 @@ async function fetchCities(state) {
 				signal: controller.signal,
 			}
 		);
+
 		clearTimeout(timeout);
 		const data = await res.json();
 		if (!data.data) throw new Error("Invalid cities data");
+
 		localStorage.setItem(`cities_${state}`, JSON.stringify(data.data));
 		spinner.style.display = "none";
 		console.log(`Fetched ${data.data.length} cities for ${state}`);
@@ -225,6 +237,7 @@ document.addEventListener("DOMContentLoaded", () => {
 	createChart([0, 0, 0, 0, 0]);
 	refreshLocalCalc();
 
+	// Predict tab State -> City
 	stateSelect.addEventListener("change", async function () {
 		const state = this.value;
 		citySelect.innerHTML = '<option value="">Select City</option>';
@@ -235,6 +248,20 @@ document.addEventListener("DOMContentLoaded", () => {
 			option.value = city;
 			option.textContent = city;
 			citySelect.appendChild(option);
+		});
+	});
+
+	// NEW: Live tab State -> City
+	stateLiveSelect.addEventListener("change", async function () {
+		const state = this.value;
+		cityLiveSelect.innerHTML = '<option value="">Select City</option>';
+		if (!state) return;
+		const cities = await fetchCities(state);
+		cities.forEach((city) => {
+			const option = document.createElement("option");
+			option.value = city;
+			option.textContent = city;
+			cityLiveSelect.appendChild(option);
 		});
 	});
 
