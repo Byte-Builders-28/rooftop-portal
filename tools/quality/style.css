@@ -131,3 +131,41 @@ footer {
 	padding: 1rem 0;
 	text-align: center;
 }
+/* Hero action buttons – simple white boxes */
+#changeDeviceBtn,
+#recalcBtn {
+	background: #ffffff;
+	color: #212529;
+	border: none;
+	border-radius: 12px;
+	padding: 8px 16px;
+	font-size: 0.8rem;
+	font-weight: 600;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	transition: transform 0.15s ease, box-shadow 0.15s ease;
+	box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+/* Hover – subtle lift only */
+#changeDeviceBtn:hover,
+#recalcBtn:hover {
+	transform: translateY(-1px);
+	box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+}
+
+/* Active – press */
+#changeDeviceBtn:active,
+#recalcBtn:active {
+	transform: translateY(0);
+	box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+}
+
+/* Mobile */
+@media (max-width: 576px) {
+	#changeDeviceBtn,
+	#recalcBtn {
+		width: 100%;
+	}
+}
