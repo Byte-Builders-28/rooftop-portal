@@ -22,6 +22,7 @@ function refreshLocalCalc() {
 	const avg_need = 135;
 	const dailyUse = population * avg_need;
 	const days = dailyUse > 0 ? current / dailyUse : null;
+
 	if (days === null) {
 		$("bigDisplay").innerText = "— days left";
 	} else {
@@ -34,7 +35,9 @@ function refreshLocalCalc() {
 function createChart(values) {
 	const ctx = $("rainChart").getContext("2d");
 	const labels = values.map((_, i) => `Day ${i + 1}`);
+
 	if (chart) chart.destroy();
+
 	chart = new Chart(ctx, {
 		type: "bar",
 		data: {
@@ -91,6 +94,7 @@ function populateStates() {
 		"Jammu and Kashmir",
 		"Ladakh",
 	];
+
 	states.forEach((s) => {
 		stateChoices.setChoices([{ value: s, label: s }], "value", "label", false);
 		stateLiveChoices.setChoices(
@@ -105,13 +109,16 @@ function populateStates() {
 async function fetchCities(state) {
 	try {
 		spinner.style.display = "flex";
+
 		const cached = localStorage.getItem(`cities_${state}`);
 		if (cached) {
 			spinner.style.display = "none";
 			return JSON.parse(cached);
 		}
+
 		const controller = new AbortController();
 		const timeout = setTimeout(() => controller.abort(), 30000);
+
 		const res = await fetch(
 			"https://countriesnow.space/api/v0.1/countries/state/cities",
 			{
@@ -121,10 +128,14 @@ async function fetchCities(state) {
 				signal: controller.signal,
 			}
 		);
+
 		clearTimeout(timeout);
+
 		const data = await res.json();
 		if (!data.data) throw new Error("Invalid cities data");
+
 		localStorage.setItem(`cities_${state}`, JSON.stringify(data.data));
+
 		spinner.style.display = "none";
 		return data.data;
 	} catch (err) {
@@ -137,18 +148,24 @@ async function fetchCities(state) {
 
 function populateReport(obj) {
 	$("phVal").innerText = obj.ph ?? "-";
-	$("tdsVal").innerText = obj.tds ? obj.tds + " ppm" : "-";
+	$("tdsVal").innerText = obj.tds != null ? obj.tds + " ppm" : "-";
+
 	const storage =
 		obj.storage_risk === 0 ? "Low" : obj.storage_risk === 1 ? "High" : "-";
 	const quality =
 		obj.quality_risk === 0 ? "Low" : obj.quality_risk === 1 ? "High" : "-";
+
 	$("storageRisk").innerText = storage;
 	$("qualityRisk").innerText = quality;
+
 	const getColor = (val) =>
 		val === "Low" ? "#16a34a" : val === "High" ? "#dc2626" : "#6b7280";
+
 	$("storageRisk").style.color = getColor(storage);
 	$("qualityRisk").style.color = getColor(quality);
+
 	$("overallSuggestion").innerText = obj.overall_suggestion ?? "-";
+
 	const tipsList = $("tipsList");
 	tipsList.innerHTML = "";
 	(obj.storage_tips || []).forEach((t) => {
@@ -156,25 +173,71 @@ function populateReport(obj) {
 		li.innerText = t;
 		tipsList.appendChild(li);
 	});
+
 	createChart(obj.rain_forecast || [0, 0, 0, 0, 0]);
 }
 
+// -------- Fetch live sensor data (PH + TDS) -------- //
+async function fetchLiveSensor(deviceId) {
+	try {
+		const res = await fetch(
+			`https://evs-aquabytes.onrender.com/api/v1/sensor/latest/${deviceId}`,
+			{ method: "GET", headers: { accept: "application/json" } }
+		);
+
+		const data = await res.json();
+		if (!data.sensor_data) return null;
+
+		return {
+			ph: data.sensor_data.ph,
+			tds: data.sensor_data.tds,
+		};
+	} catch (err) {
+		console.error("Sensor fetch failed", err);
+		return null;
+	}
+}
+
+// -------- Submit Form -------- //
 async function handleSubmit(e) {
 	e.preventDefault();
+
 	const state = stateSelect.value;
 	const city = citySelect.value;
 	const tank_cap = Number($("tank_cap").value) || 0;
 	const current_level = Number($("current_level").value) || 0;
 	const population = Number($("population").value) || 0;
 	const avg_need = 135;
+
 	if (!state || !city || population <= 0) {
 		$("formMsg").innerText = "Please fill all required fields!";
 		return;
 	}
+
 	$("formMsg").innerText = "";
 	spinner.style.display = "flex";
+
 	try {
 		refreshLocalCalc();
+
+		// Fetch PH + TDS live from ESP32 server
+		const sensor = await fetchLiveSensor("ESP32_001");
+
+		const payload = {
+			uuid: "user",
+			state,
+			city,
+			tank_cap,
+			current_level,
+			population,
+			avg_need,
+		};
+
+		if (sensor) {
+			payload.ph = sensor.ph;
+			payload.tds = sensor.tds;
+		}
+
 		const response = await fetch(
 			"https://aquabytes.onrender.com/api/ml/predict",
 			{
@@ -183,17 +246,10 @@ async function handleSubmit(e) {
 					"Content-Type": "application/json",
 					Accept: "application/json",
 				},
-				body: JSON.stringify({
-					uuid: "user",
-					state,
-					city,
-					tank_cap,
-					current_level,
-					population,
-					avg_need,
-				}),
+				body: JSON.stringify(payload),
 			}
 		);
+
 		const data = await response.json();
 		populateReport(data);
 		$("formMsg").innerText = "Report generated!";
@@ -214,7 +270,6 @@ function handleReset() {
 
 // DOMContentLoaded
 document.addEventListener("DOMContentLoaded", () => {
-	// Initialize Choices.js
 	stateChoices = new Choices("#state", {
 		searchEnabled: true,
 		shouldSort: false,
@@ -236,7 +291,6 @@ document.addEventListener("DOMContentLoaded", () => {
 	createChart([0, 0, 0, 0, 0]);
 	refreshLocalCalc();
 
-	// Populate cities when state changes
 	stateSelect.addEventListener("change", async function () {
 		const state = this.value;
 		const cities = await fetchCities(state);
@@ -245,6 +299,7 @@ document.addEventListener("DOMContentLoaded", () => {
 			cityChoices.setChoices([{ value: c, label: c }], "value", "label", false)
 		);
 	});
+
 	stateLiveSelect.addEventListener("change", async function () {
 		const state = this.value;
 		const cities = await fetchCities(state);
