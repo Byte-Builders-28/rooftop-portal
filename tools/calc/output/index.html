@@ -257,7 +257,7 @@
 				document.getElementById("gw_recharge").textContent =
 					result.gw_recharge.toLocaleString() + " L";
 				document.getElementById("cost_estimate").textContent =
-					"₹" + result.cost_estimate.toLocaleString();
+					"₹" + Math.round(result.cost_estimate).toLocaleString();
 
 				localStorage.removeItem("rainwaterResult");
 			});
